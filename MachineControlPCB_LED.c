@@ -43,7 +43,7 @@ typedef struct _GPIO_PIN {
 /* LED GPIO Pins */
 static const GPIO_PIN LED_PIN[] = {
   { GPIOC, GPIO_PIN_4},
-  { GPIOC, GPIO_PIN_5}
+  { GPIOI, GPIO_PIN_10}
 };
 
 #define LED_COUNT (sizeof(LED_PIN)/sizeof(GPIO_PIN))
@@ -58,26 +58,27 @@ static const GPIO_PIN LED_PIN[] = {
 */
 int32_t LED_Initialize (void) {
   GPIO_InitTypeDef GPIO_InitStruct;
-	GPIO_InitTypeDef GPIO_InitStruct2;
+  GPIO_InitTypeDef GPIO_InitStruct2;
 
   /* GPIO Ports Clock Enable */
   __GPIOC_CLK_ENABLE();
 
   /* Configure GPIO pins: PG13 PG14 */
-  GPIO_InitStruct.Pin   = GPIO_PIN_4 | GPIO_PIN_5;
+  GPIO_InitStruct.Pin   = GPIO_PIN_4;
   GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull  = GPIO_PULLDOWN;
   GPIO_InitStruct.Speed = GPIO_SPEED_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
+  /* GPIO Ports Clock Enable */
+  __GPIOI_CLK_ENABLE();
 
-  /* Configure GPIO pins: PH4 PH8 */
-  GPIO_InitStruct2.Pin   = GPIO_PIN_4 | GPIO_PIN_8;
-  GPIO_InitStruct2.Mode  = GPIO_MODE_INPUT;
+  /* Configure GPIO pins: PG13 PG14 */
+  GPIO_InitStruct2.Pin   = GPIO_PIN_10;
+  GPIO_InitStruct2.Mode  = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct2.Pull  = GPIO_PULLDOWN;
   GPIO_InitStruct2.Speed = GPIO_SPEED_LOW;
-  HAL_GPIO_Init(GPIOH, &GPIO_InitStruct2);
-	
+  HAL_GPIO_Init(GPIOI, &GPIO_InitStruct2);
   return 0;
 }
 
@@ -90,7 +91,8 @@ int32_t LED_Initialize (void) {
 */
 int32_t LED_Uninitialize (void) {
 
-  HAL_GPIO_DeInit(GPIOC, GPIO_PIN_4 | GPIO_PIN_5);
+  HAL_GPIO_DeInit(GPIOC, GPIO_PIN_4);
+	HAL_GPIO_DeInit(GPIOI, GPIO_PIN_10);
 
   return 0;
 }

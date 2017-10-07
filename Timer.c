@@ -3,6 +3,7 @@
 #include "stm32f4xx_hal.h"
 #include "MachineControlPCB_LED.h"
 #include "MachineControlPCB_Motor.h"  
+#include "MachineControlPCB_Buttons.h"
 
 static int timer_cnt = 0;
 
@@ -20,7 +21,32 @@ static osTimerDef (Timer1, Timer1_Callback);                    // define timers
 
 // One-Shoot Timer Function
 static void Timer1_Callback (void const *arg) {
-
+	if (!Buttons_Status(0))
+	{
+		LED_Off(1);
+		Motor_Off(1);
+		LED_On (0);
+		Motor_On(0);
+		timer_cnt = 1;
+	}
+  else if (!Buttons_Status(1))
+	{
+		LED_Off(0);
+		Motor_Off(0);
+		LED_On(1);
+		Motor_On(1);
+		timer_cnt = 1;
+	}
+	else 
+	{
+		if (timer_cnt != 1)
+	  {
+			LED_Off(1);
+			Motor_Off(1);
+			LED_On (0);
+			Motor_On(0);
+		}
+	}
 }
 
 
@@ -33,20 +59,6 @@ static osTimerDef (Timer2, Timer2_Callback);
  
 // Periodic Timer Example
 static void Timer2_Callback (void const *arg) {
-	timer_cnt++;
-	if (timer_cnt & 1)
-	{ 
-		if (HAL_GPIO_ReadPin(GPIOH, GPIO_PIN_4))
-		{
-			LED_On (0);
-			Motor_On(0);
-		}
-	}
-  else 
-	{
-		LED_Off(0);
-		Motor_Off(0);
-	}
 }
 
 
@@ -56,10 +68,10 @@ void Init_Timers (void) {
  
   // Create one-shoot timer
   exec1 = 1;
-  id1 = osTimerCreate (osTimer(Timer1), osTimerOnce, &exec1);
+  id1 = osTimerCreate (osTimer(Timer1), osTimerPeriodic, &exec1);
   if (id1 != NULL) {    // One-shot timer created
-    // start timer with delay 100ms
-    status = osTimerStart (id1, 100);            
+    // start timer with delay 10ms
+    status = osTimerStart (id1, 10);            
     if (status != osOK) {
       // Timer could not be started
     }

@@ -42,7 +42,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "MachineControlPCB_LED.h" 
-#include "MachineControlPCB_Motor.h"              
+#include "MachineControlPCB_Motor.h"
+#include "MachineControlPCB_Buttons.h"
 
 #ifdef _RTE_
 #include "RTE_Components.h"             /* Component selection */
@@ -106,6 +107,7 @@ int main(void)
 	Init_Timers();
 	LED_Initialize();
 	Motor_Initialize();
+	Buttons_Initialize();
 	ActuatorReset_Off(0);
 
 

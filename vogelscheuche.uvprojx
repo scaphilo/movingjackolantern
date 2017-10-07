@@ -410,6 +410,16 @@
               <FileType>5</FileType>
               <FilePath>.\MachineControlPCB_Motor.h</FilePath>
             </File>
+            <File>
+              <FileName>MachineControlPCB_Buttons.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\MachineControlPCB_Buttons.c</FilePath>
+            </File>
+            <File>
+              <FileName>MachineControlPCB_Buttons.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\MachineControlPCB_Buttons.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
