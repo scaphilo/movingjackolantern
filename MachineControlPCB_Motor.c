@@ -32,7 +32,12 @@
    ---------------------------------------------------------------------------*/
 
 #include "stm32f4xx_hal.h"
+#include "stm32f4xx_hal_rcc.h"
+#include "stm32f4xx_hal_gpio.h"
+#include "stm32f4xx_hal_tim.h"
 #include "MachineControlPCB_Motor.h"
+
+TIM_HandleTypeDef htim5;
 
 /* GPIO Pin identifier */
 typedef struct _GPIO_PIN {
@@ -63,16 +68,23 @@ static const GPIO_PIN Motor_PIN[] = {
 int32_t Motor_Initialize (void) {
   GPIO_InitTypeDef GPIO_InitStruct;
 	GPIO_InitTypeDef GPIO_InitStruct2;
+	TIM_MasterConfigTypeDef sMasterConfig;
+  TIM_OC_InitTypeDef sConfigOC;
+  TIM_OC_InitTypeDef sConfigOC2;
+	
 
   /* GPIO Ports Clock Enable */
   __GPIOG_CLK_ENABLE();
   __GPIOH_CLK_ENABLE();
-
-  /* Configure GPIO pins: PG13 PG14 */
+	
+  __HAL_RCC_TIM5_CLK_ENABLE();
+	
+  /*Configure GPIO pins: PG13 PG14 */
   GPIO_InitStruct.Pin   = GPIO_PIN_11 | GPIO_PIN_10;
-  GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull  = GPIO_PULLDOWN;
+  GPIO_InitStruct.Mode  = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Pull  = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_LOW;
+	GPIO_InitStruct.Alternate = GPIO_AF2_TIM5;
   HAL_GPIO_Init(GPIOH, &GPIO_InitStruct);
 
 	GPIO_InitStruct2.Pin   = GPIO_PIN_10;
@@ -80,6 +92,35 @@ int32_t Motor_Initialize (void) {
   GPIO_InitStruct2.Pull  = GPIO_PULLDOWN;
   GPIO_InitStruct2.Speed = GPIO_SPEED_LOW;
 	HAL_GPIO_Init(GPIOG, &GPIO_InitStruct2);
+	
+	htim5.Instance = TIM5;
+  htim5.Init.Prescaler = 0;
+  htim5.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim5.Init.Period = 8399;
+  htim5.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+	htim5.Init.RepetitionCounter = 0;
+  HAL_TIM_PWM_Init(&htim5);
+	
+/*	sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  HAL_TIMEx_MasterConfigSynchronization(&htim5, &sMasterConfig);*/
+
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.OCIdleState = TIM_OCIDLESTATE_SET;
+  sConfigOC.Pulse = 4199;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_ENABLE;
+	
+	sConfigOC2.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC2.OCIdleState = TIM_OCIDLESTATE_SET;
+  sConfigOC2.Pulse = 4199;
+  sConfigOC2.OCPolarity = TIM_OCPOLARITY_LOW;
+  sConfigOC2.OCFastMode = TIM_OCFAST_ENABLE;
+	
+	HAL_TIM_PWM_ConfigChannel(&htim5, &sConfigOC, TIM_CHANNEL_1);
+  HAL_TIM_PWM_ConfigChannel(&htim5, &sConfigOC2, TIM_CHANNEL_2);
+  HAL_TIM_PWM_ConfigChannel(&htim5, &sConfigOC, TIM_CHANNEL_3);
+  HAL_TIM_PWM_ConfigChannel(&htim5, &sConfigOC, TIM_CHANNEL_4);
 	
   return 0;
 }
@@ -118,8 +159,21 @@ int32_t ActuatorReset_On (uint32_t num) {
    - \b  0: function succeeded
    - \b -1: function faiMotor
 */
-int32_t Motor_On (uint32_t num) {
-  HAL_GPIO_WritePin(Motor_PIN[num].port, Motor_PIN[num].pin, GPIO_PIN_SET);
+int32_t Motor_Forward (uint32_t num) {
+	HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_1);
+  return 0;
+}
+
+/**
+  \fn          int32_t Motor_On (uint32_t num)
+  \brief       Turn on requested Motor
+  \param[in]   num  Motor number
+  \returns
+   - \b  0: function succeeded
+   - \b -1: function faiMotor
+*/
+int32_t Motor_Backward (uint32_t num) {
+	HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_2);
   return 0;
 }
 
@@ -132,7 +186,8 @@ int32_t Motor_On (uint32_t num) {
    - \b -1: function faiMotor
 */
 int32_t Motor_Off (uint32_t num) {
-  HAL_GPIO_WritePin(Motor_PIN[num].port, Motor_PIN[num].pin, GPIO_PIN_RESET);
+	HAL_TIM_PWM_Stop(&htim5, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Stop(&htim5, TIM_CHANNEL_2);
   return 0;
 }
 
@@ -150,7 +205,7 @@ int32_t Motor_SetOut (uint32_t val) {
   for (n = 0; n < Motor_COUNT; n++) 
 	{
     if (val & (1 << n)) 
-			Motor_On (n);
+			Motor_Forward (n);
     else                
 			Motor_Off(n);
   }

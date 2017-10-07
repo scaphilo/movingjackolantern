@@ -82,11 +82,13 @@
 
 extern int32_t  Motor_Initialize   (void);
 extern int32_t  Motor_Uninitialize (void);
-extern int32_t  Motor_On           (uint32_t num);
+extern int32_t  Motor_Forward      (uint32_t num);
+extern int32_t  Motor_Backward    (uint32_t num);
 extern int32_t  Motor_Off          (uint32_t num);
 extern int32_t  ActuatorReset_On   (uint32_t num);
 extern int32_t  ActuatorReset_Off  (uint32_t num);
 extern int32_t  Motor_SetOut       (uint32_t val);
 extern uint32_t Motor_GetCount     (void);
+extern TIM_HandleTypeDef htim5;
 
 #endif /* __BOARD_MOTOR_H */

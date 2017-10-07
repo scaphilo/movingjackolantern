@@ -24,27 +24,36 @@ static void Timer1_Callback (void const *arg) {
 	if (!Buttons_Status(0))
 	{
 		LED_Off(1);
-		Motor_Off(1);
-		LED_On (0);
-		Motor_On(0);
-		timer_cnt = 1;
+		LED_Off (0);
+		Motor_Off(0);
+		timer_cnt = 2;
 	}
   else if (!Buttons_Status(1))
 	{
 		LED_Off(0);
+		LED_Off(1);
 		Motor_Off(0);
-		LED_On(1);
-		Motor_On(1);
 		timer_cnt = 1;
 	}
 	else 
 	{
-		if (timer_cnt != 1)
+		if (timer_cnt == 0)
 	  {
 			LED_Off(1);
-			Motor_Off(1);
 			LED_On (0);
-			Motor_On(0);
+			Motor_Forward(0);
+		}
+		else if (timer_cnt == 2)
+		{
+			LED_Off(1);
+			LED_On (0);
+			Motor_Forward(0);
+		}
+		else if (timer_cnt == 1)
+		{
+			LED_On (1);
+			LED_Off (0);
+			Motor_Backward(0);
 		}
 	}
 }
@@ -71,7 +80,7 @@ void Init_Timers (void) {
   id1 = osTimerCreate (osTimer(Timer1), osTimerPeriodic, &exec1);
   if (id1 != NULL) {    // One-shot timer created
     // start timer with delay 10ms
-    status = osTimerStart (id1, 10);            
+    status = osTimerStart (id1, 20);            
     if (status != osOK) {
       // Timer could not be started
     }
