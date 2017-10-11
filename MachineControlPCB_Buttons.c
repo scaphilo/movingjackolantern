@@ -94,8 +94,12 @@ int32_t Buttons_Uninitialize (void) {
    - \b  0: function succeeded
    - \b -1: function faiButtons
 */
-GPIO_PinState Buttons_Status (uint32_t num) {
-  return HAL_GPIO_ReadPin(Buttons_PIN[num].port, Buttons_PIN[num].pin);
+GPIO_PinState Button_Downward_Reached () {
+  return HAL_GPIO_ReadPin(Buttons_PIN[0].port, Buttons_PIN[0].pin);
+}
+
+GPIO_PinState Button_Upward_Reached () {
+  return HAL_GPIO_ReadPin(Buttons_PIN[1].port, Buttons_PIN[1].pin);
 }
 
 /**

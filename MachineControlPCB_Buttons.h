@@ -83,7 +83,8 @@
 
 extern int32_t  Buttons_Initialize   (void);
 extern int32_t  Buttons_Uninitialize (void);
-extern GPIO_PinState  Buttons_Status       (uint32_t num);
+extern GPIO_PinState  Button_Downward_Reached       (void);
+extern GPIO_PinState  Button_Upward_Reached       (void);
 
 
 #endif /* __BOARD_Buttons_H */

@@ -5,7 +5,20 @@
 #include "MachineControlPCB_Motor.h"  
 #include "MachineControlPCB_Buttons.h"
 
-static int timer_cnt = 0;
+enum fsm_states {
+    start = 0,
+    moving_upward = 1,
+    moving_downward = 2,
+    moving_upward_wait = 3,
+    moving_downward_wait = 4,
+		timeoutreached_error = 5
+};
+
+static int counter = 0;
+static int waitstates_upward = 100;
+static int waitstates_downward = 100;
+static int timeout_motor = 300;
+enum fsm_states state = start;
 
 /*----------------------------------------------------------------------------
  *      Timer: Sample timer functions
@@ -16,44 +29,77 @@ static int timer_cnt = 0;
 static void Timer1_Callback (void const *arg);                  // prototype for timer callback function
 
 static osTimerId id1;                                           // timer id
-static uint32_t  exec1;                                         // argument for the timer call back function
+static uint32_t  exec1;  // argument for the timer call back function
 static osTimerDef (Timer1, Timer1_Callback);                    // define timers
 
 // One-Shoot Timer Function
 static void Timer1_Callback (void const *arg) {
-	if (!Buttons_Status(0))
+	if ((!Button_Downward_Reached()) && (state == moving_downward) || (state == start)) 
 	{
 		LED_Off(1);
-		LED_Off (0);
+		LED_Off(0);
+		LED_Off(2);
 		Motor_Off(0);
-		timer_cnt = 2;
+		counter = 0;
+		state = moving_upward_wait;
 	}
-  else if (!Buttons_Status(1))
+  else if ((!Button_Upward_Reached()) && (state == moving_upward))
 	{
 		LED_Off(0);
 		LED_Off(1);
+		LED_Off(2);
 		Motor_Off(0);
-		timer_cnt = 1;
+		counter = 0;
+		state = moving_downward_wait;
 	}
 	else 
 	{
-		if (timer_cnt == 0)
+		if (state == moving_downward_wait)
 	  {
-			LED_Off(1);
-			LED_On (0);
-			Motor_Forward(0);
+			if (counter >= waitstates_downward)
+			{
+				LED_Off(1);
+				LED_On(0);
+				LED_Off(2);
+				Motor_Downward(0);
+				counter = 0;
+				state = moving_downward;
+			}
+			else
+			{
+				counter = counter + 1;
+			}
 		}
-		else if (timer_cnt == 2)
-		{
-			LED_Off(1);
-			LED_On (0);
-			Motor_Forward(0);
+		else if (state == moving_upward_wait)
+	  {
+			if (counter >= waitstates_upward)
+			{
+				LED_Off(1);
+				LED_On(0);
+				LED_Off(2);
+				Motor_Upward(0);
+				counter = 0;
+				state = moving_upward;
+			}
+			else
+			{
+				counter = counter + 1;
+			}
 		}
-		else if (timer_cnt == 1)
+		else if ((state == moving_downward) || (state == moving_upward))
 		{
-			LED_On (1);
-			LED_Off (0);
-			Motor_Backward(0);
+			if (counter >= timeout_motor)
+			{
+				LED_Off(1);
+				LED_Off(0);
+				LED_Off(2);
+				Motor_Off(0);
+				state = timeoutreached_error;
+			}
+			else
+			{
+				counter = counter + 1;
+			}
 		}
 	}
 }

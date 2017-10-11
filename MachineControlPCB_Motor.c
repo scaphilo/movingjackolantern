@@ -38,6 +38,7 @@
 #include "MachineControlPCB_Motor.h"
 
 TIM_HandleTypeDef htim5;
+TIM_HandleTypeDef htim12;
 
 /* GPIO Pin identifier */
 typedef struct _GPIO_PIN {
@@ -51,6 +52,7 @@ static const GPIO_PIN ActuatorReset_PIN[] = {
 };
 
 static const GPIO_PIN Motor_PIN[] = {
+  { GPIOH, GPIO_PIN_9},
   { GPIOH, GPIO_PIN_10},
   { GPIOH, GPIO_PIN_11}
 };
@@ -68,9 +70,11 @@ static const GPIO_PIN Motor_PIN[] = {
 int32_t Motor_Initialize (void) {
   GPIO_InitTypeDef GPIO_InitStruct;
 	GPIO_InitTypeDef GPIO_InitStruct2;
+	GPIO_InitTypeDef GPIO_InitStruct3;
 	TIM_MasterConfigTypeDef sMasterConfig;
   TIM_OC_InitTypeDef sConfigOC;
   TIM_OC_InitTypeDef sConfigOC2;
+  TIM_OC_InitTypeDef sConfigOC3;
 	
 
   /* GPIO Ports Clock Enable */
@@ -78,8 +82,8 @@ int32_t Motor_Initialize (void) {
   __GPIOH_CLK_ENABLE();
 	
   __HAL_RCC_TIM5_CLK_ENABLE();
+	__HAL_RCC_TIM12_CLK_ENABLE();
 	
-  /*Configure GPIO pins: PG13 PG14 */
   GPIO_InitStruct.Pin   = GPIO_PIN_11 | GPIO_PIN_10;
   GPIO_InitStruct.Mode  = GPIO_MODE_AF_PP;
   GPIO_InitStruct.Pull  = GPIO_NOPULL;
@@ -93,6 +97,13 @@ int32_t Motor_Initialize (void) {
   GPIO_InitStruct2.Speed = GPIO_SPEED_LOW;
 	HAL_GPIO_Init(GPIOG, &GPIO_InitStruct2);
 	
+	GPIO_InitStruct3.Pin   = GPIO_PIN_9;
+  GPIO_InitStruct3.Mode  = GPIO_MODE_AF_PP;
+  GPIO_InitStruct3.Pull  = GPIO_NOPULL;
+  GPIO_InitStruct3.Speed = GPIO_SPEED_LOW;
+	GPIO_InitStruct3.Alternate = GPIO_AF9_TIM12;
+  HAL_GPIO_Init(GPIOH, &GPIO_InitStruct3);
+	
 	htim5.Instance = TIM5;
   htim5.Init.Prescaler = 0;
   htim5.Init.CounterMode = TIM_COUNTERMODE_UP;
@@ -100,6 +111,14 @@ int32_t Motor_Initialize (void) {
   htim5.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
 	htim5.Init.RepetitionCounter = 0;
   HAL_TIM_PWM_Init(&htim5);
+	
+	htim12.Instance = TIM12;
+  htim12.Init.Prescaler = 0;
+  htim12.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim12.Init.Period = 8399;
+  htim12.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+	htim12.Init.RepetitionCounter = 0;
+  HAL_TIM_PWM_Init(&htim12);
 	
 /*	sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
@@ -117,8 +136,15 @@ int32_t Motor_Initialize (void) {
   sConfigOC2.OCPolarity = TIM_OCPOLARITY_LOW;
   sConfigOC2.OCFastMode = TIM_OCFAST_ENABLE;
 	
+  sConfigOC3.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC3.OCIdleState = TIM_OCIDLESTATE_SET;
+  sConfigOC3.Pulse = 4199;
+  sConfigOC3.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC3.OCFastMode = TIM_OCFAST_ENABLE;
+	
 	HAL_TIM_PWM_ConfigChannel(&htim5, &sConfigOC, TIM_CHANNEL_1);
   HAL_TIM_PWM_ConfigChannel(&htim5, &sConfigOC2, TIM_CHANNEL_2);
+  HAL_TIM_PWM_ConfigChannel(&htim12, &sConfigOC3, TIM_CHANNEL_2);
   HAL_TIM_PWM_ConfigChannel(&htim5, &sConfigOC, TIM_CHANNEL_3);
   HAL_TIM_PWM_ConfigChannel(&htim5, &sConfigOC, TIM_CHANNEL_4);
 	
@@ -135,7 +161,7 @@ int32_t Motor_Initialize (void) {
 */
 int32_t Motor_Uninitialize (void) {
 
-  HAL_GPIO_DeInit(GPIOH, GPIO_PIN_11 | GPIO_PIN_10);
+  HAL_GPIO_DeInit(GPIOH, GPIO_PIN_11 | GPIO_PIN_10 | GPIO_PIN_9);
   HAL_GPIO_DeInit(GPIOG, GPIO_PIN_10);
 
   return 0;
@@ -159,7 +185,7 @@ int32_t ActuatorReset_On (uint32_t num) {
    - \b  0: function succeeded
    - \b -1: function faiMotor
 */
-int32_t Motor_Forward (uint32_t num) {
+int32_t Motor_Upward (uint32_t num) {
 	HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_1);
   return 0;
 }
@@ -172,8 +198,9 @@ int32_t Motor_Forward (uint32_t num) {
    - \b  0: function succeeded
    - \b -1: function faiMotor
 */
-int32_t Motor_Backward (uint32_t num) {
+int32_t Motor_Downward (uint32_t num) {
 	HAL_TIM_PWM_Start(&htim5, TIM_CHANNEL_2);
+	//HAL_TIM_PWM_Start(&htim12, TIM_CHANNEL_2);
   return 0;
 }
 
@@ -188,6 +215,7 @@ int32_t Motor_Backward (uint32_t num) {
 int32_t Motor_Off (uint32_t num) {
 	HAL_TIM_PWM_Stop(&htim5, TIM_CHANNEL_1);
 	HAL_TIM_PWM_Stop(&htim5, TIM_CHANNEL_2);
+	HAL_TIM_PWM_Stop(&htim12, TIM_CHANNEL_2);
   return 0;
 }
 
@@ -205,7 +233,7 @@ int32_t Motor_SetOut (uint32_t val) {
   for (n = 0; n < Motor_COUNT; n++) 
 	{
     if (val & (1 << n)) 
-			Motor_Forward (n);
+			Motor_Upward (n);
     else                
 			Motor_Off(n);
   }
